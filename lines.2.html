@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Lines 1</title>
+        <title>Lines 2</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.min.js"></script>
         <style>
             .p5Canvas {
@@ -31,63 +31,54 @@
     const innerNoiseScale = 0.0555;
 
     let xOff = 0;
+    const lineDelta  = lineHeight / numLines;
+    const pointDelta = lineWidth / numPeaks;
 
     function setup() {
         createCanvas(canvasWidth, canvasHeight);
 
         noiseSeed(performance.now());
-        colorMode(HSB, 255);
+        // colorMode(HSB, 255);
     }
 
     function draw() {
+        colorMode(RGB, 255);
         background(10, 20, 30);
         stroke(224);
         // strokeWeight(0.5);
         fill(10, 20, 30);
 
+        colorMode(HSB, 255);
         // xOff -= (mouseX - pmouseX) / (canvasWidth / 8);
-        xOff = -performance.now() / 10000
+        xOff       = -performance.now() / 10000
         const yOff = performance.now() + 300
-        lines = []
-
 
         for (let li = 0; li < numLines; li++) {
+            beginShape();
+            vertex(0, canvasHeight);
+
             let _ys = -(cos(TWO_PI * (li / numLines))) / 2 + 0.5;
 
-            const newLine = [0];
             for (let peak = 0; peak < numPeaks; peak++) {
                 let _ns = -(cos(TWO_PI * (peak / numPeaks))) / 2 + 0.5;
                 _ns = noiseScale * _ns;
+                
+                let total_scale = _ns * _ys;
 
-                p = (noise(peak * innerNoiseScale + xOff, li * innerNoiseScale + yOff) * _ns * _ys) - (_ns * _ys) / 2;
-                newLine.push(p)
-            }
-            newLine.push(0);
-            lines.push(newLine);
-        }
+                let p = (noise(peak * innerNoiseScale + xOff, li * innerNoiseScale + yOff) * total_scale)
+                let pv = p - (total_scale) / 2;
 
-        const lineDelta = lineHeight / lines.length;
-        const pointDelta = lineWidth / numPeaks;
+                vertex(lineMarginWidth + pointDelta * peak, lineMarginHeight + (lineDelta / 2) + (lineDelta * li) + pv);
 
-        for (let l = 0; l < lines.length; l++) {
-
-            beginShape();
-            vertex(0, canvasHeight);
-            const cl = lines[l];
-            const pn = performance.now() / 1000;
-            for (let p = 0; p < cl.length - 1; p++) {
-                const _brightness = pointDelta * (p + 7) / lineWidth * 255;
-                const _hue = (abs(l - yOff * 10) * lineDelta % lineWidth) / lineWidth;
-
-                vertex(lineMarginWidth + pointDelta * p, lineMarginHeight + (lineDelta / 2) + (lineDelta * l) + cl[p]);
-
-                stroke(parseInt(_hue * 255), 190, _brightness);
-                // line(lineMarginWidth + pointDelta * p, lineMarginHeight + (lineDelta / 2) + (lineDelta * l) + cl[p],
-                //   lineMarginWidth + pointDelta * p + pointDelta, lineMarginHeight + (lineDelta / 2) + (lineDelta * l) + cl[p + 1]);
+                const _brightness = pointDelta * (peak + 7) / lineWidth * 255;
+                const _hue = (p / noiseScale) * 255;
+                
+                stroke(_hue, 190, _brightness);
             }
             vertex(canvasWidth, canvasHeight);
             endShape(CLOSE);
         }
+
         noLoop();
     }
 
